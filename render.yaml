@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: agri-intelligence
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
