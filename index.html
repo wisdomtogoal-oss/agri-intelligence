@@ -179,6 +179,26 @@
         <button class="btn-audio" onclick="playKumaoniAudio()">🔊 कुमाऊँनी (Kumaoni) ऑडियो सलाह सुनें</button>
       </div>
     </div>
+<body>
+    <!-- 1. Header Section -->
+    <header>
+      <h1>उत्तराखंड कृषि-बुद्धिमत्ता पोर्टल</h1>
+    </header>
+
+    <!-- 2. Interactive Inputs & Buttons -->
+    <div class="card">
+      <h3>📸 AI Diagnosis</h3>
+      <!-- Upload Button -->
+      <input type="file" id="imageInput" accept="image/*" onchange="handleDiagnosis(event)">
+      
+      <!-- Clickable Moisture Card -->
+      <div onclick="openMoistureSection()" style="cursor: pointer;">
+        <h4>🌱 उपग्रह नमी मापन (Click to View Map)</h4>
+      </div>
+    </div>
+
+    <!-- 3. Satellite Map Container -->
+    <div id="map" style="height: 300px;"></div>
 
     <!-- 4. E-NAM MANDI & SEEDS -->
     <div class="card">
@@ -368,5 +388,38 @@
     // Init
     updateSubDistricts();
   </script>
+      <!-- 4. JAVASCRIPT FUNCTIONS (At the bottom of body) -->
+    <script>
+      // Function 1: Scroll to map when picture is clicked
+      function openMoistureSection() {
+        const mapElement = document.getElementById("map");
+        if (mapElement) {
+          mapElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+
+      // Function 2: Send image to Render API
+      async function handleDiagnosis(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const response = await fetch("https://agri-intelligence-oj5n.onrender.com/predict", {
+            method: "POST",
+            body: formData
+          });
+          const data = await response.json();
+          console.log("Analysis Result:", data);
+        } catch (err) {
+          console.error("Error connecting to Render:", err);
+        }
+      }
+    </script>
+</body>
+</html>
+
 </body>
 </html>
