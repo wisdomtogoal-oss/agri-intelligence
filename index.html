@@ -1,9 +1,63 @@
-<!doctype html>
-<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Agri Intelligence</title>
-<style>body{font-family:Arial;margin:0;background:#f3f6f2;color:#183020}header{background:#20562e;color:white;padding:25px}main{max-width:1000px;margin:auto;padding:20px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:white;padding:18px;border-radius:14px}.n{font-size:28px;font-weight:bold}@media(max-width:700px){.cards{grid-template-columns:1fr 1fr}}</style></head>
-<body><header><h1>🌾 Agri Intelligence</h1><div>Satellite + Weather Dashboard</div></header><main>
-<div class="cards"><div class="card">Temperature<div class="n" id="t">—</div></div><div class="card">Rainfall<div class="n" id="r">—</div></div><div class="card">Satellite scenes<div class="n" id="s">—</div></div><div class="card">NDVI<div class="n">0.68</div></div></div>
-<div class="card" style="margin-top:15px"><h2>Recent Sentinel-2 scenes</h2><div id="rows">Loading…</div></div>
-</main><script>
-(async()=>{try{let[w,s]=await Promise.all([fetch('/api/weather').then(r=>r.json()),fetch('/api/satellite').then(r=>r.json())]);let p=w.properties.parameter,d=Object.keys(p.T2M),last=d.at(-1);document.getElementById('t').textContent=(p.T2M[last]||0).toFixed(1)+' °C';document.getElementById('r').textContent=Object.values(p.PRECTOTCORR).reduce((a,b)=>a+(+b||0),0).toFixed(1)+' mm';document.getElementById('s').textContent=s.length;document.getElementById('rows').innerHTML=s.map(x=>`<p>${(x.date||'').slice(0,10)} — cloud ${x.cloud==null?'—':x.cloud.toFixed(1)+'%'} — ${x.id}</p>`).join('')}catch(e){document.getElementById('rows').textContent='Data service temporarily unavailable.'}})()
-</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nainital Farmer Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
+    .card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    h2 { color: #2c3e50; }
+    .data-val { font-size: 1.2em; font-weight: bold; color: #27ae60; }
+  </style>
+</head>
+<body>
+
+  <h1>🌾 Nainital District Farmer Advisory Dashboard</h1>
+
+  <div class="card">
+    <h2>🌤️ Live Weather (Nainital)</h2>
+    <p>Temperature: <span id="temp" class="data-val">Loading...</span> °C</p>
+    <p>Relative Humidity: <span id="humidity" class="data-val">Loading...</span> %</p>
+    <p>Precipitation Probability: <span id="rain" class="data-val">Loading...</span> %</p>
+  </div>
+
+  <div class="card">
+    <h2>💧 Soil Moisture & Earth Observation</h2>
+    <p>Volumetric Soil Water (0-7cm depth): <span id="moisture" class="data-val">Loading...</span> m³/m³</p>
+    <small>Data Source: Satellite-derived reanalysis (ECMWF / Open Satellite Portal)</small>
+  </div>
+
+  <div class="card">
+    <h2>📋 ICAR / GKMS Hill Crop Advisories</h2>
+    <ul>
+      <li><strong>Maize / Paddy:</strong> Ensure adequate drainage in hill slopes during heavy spells.</li>
+      <li><strong>Apple / Stone Fruits:</strong> Monitor for scab and fungal outbreaks during high moisture conditions.</li>
+      <li><strong>Vegetable Crops:</strong> Use mulch to regulate topsoil moisture stability.</li>
+    </ul>
+  </div>
+
+  <script>
+    const lat = 29.3809;
+    const lon = 79.4437;
+
+    // Fetch Weather & Soil Moisture Data via REST API
+    async function fetchAgriData() {
+      try {
+        const response = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,soil_moisture_0_to_7cm&hourly=precipitation_probability&timezone=Asia%2FKolkata`
+        );
+        const data = await response.json();
+
+        document.getElementById('temp').innerText = data.current.temperature_2m;
+        document.getElementById('humidity').innerText = data.current.relative_humidity_2m;
+        document.getElementById('rain').innerText = data.hourly.precipitation_probability[0];
+        document.getElementById('moisture').innerText = data.current.soil_moisture_0_to_7cm;
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    }
+
+    fetchAgriData();
+  </script>
+</body>
+</html>
