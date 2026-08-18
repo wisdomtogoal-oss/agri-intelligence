@@ -1,63 +1,196 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
   <meta charset="UTF-8">
-  <title>Nainital Farmer Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uttarakhand Smart Krishi Dashboard</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
-    .card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    h2 { color: #2c3e50; }
-    .data-val { font-size: 1.2em; font-weight: bold; color: #27ae60; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background: #eef2f5; color: #333; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    .header-card { background: linear-gradient(135deg, #1b4332, #2d6a4f); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+    .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    h2 { color: #2d6a4f; border-bottom: 2px solid #d8f3dc; padding-bottom: 8px; margin-top: 0; }
+    .controls { margin: 15px 0; display: flex; align-items: center; gap: 10px; font-weight: bold; }
+    select { padding: 10px 15px; border-radius: 6px; border: 1px solid #ccc; font-size: 1em; background: white; cursor: pointer; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    .metric { background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #52b788; }
+    .data-val { font-size: 1.3em; font-weight: bold; color: #1b4332; display: block; margin-top: 5px; }
+    #map { height: 320px; width: 100%; border-radius: 8px; margin-top: 10px; }
+    .govt-badge { background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+    .portal-links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .portal-btn { background: #2d6a4f; color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 0.9em; }
+    .portal-btn:hover { background: #1b4332; }
   </style>
 </head>
 <body>
 
-  <h1>🌾 Nainital District Farmer Advisory Dashboard</h1>
+<div class="container">
+  
+  <div class="header-card">
+    <h1 style="margin:0;">🌾 उत्तराखंड जिलावार कृषि व उपग्रह पोर्टल</h1>
+    <p style="margin:5px 0 0 0;">District-Wise Agro-Meteorology & Satellite Earth Observation System</p>
+  </div>
 
+  <!-- District Selector -->
   <div class="card">
-    <h2>🌤️ Live Weather (Nainital)</h2>
-    <p>Temperature: <span id="temp" class="data-val">Loading...</span> °C</p>
-    <p>Relative Humidity: <span id="humidity" class="data-val">Loading...</span> %</p>
-    <p>Precipitation Probability: <span id="rain" class="data-val">Loading...</span> %</p>
+    <div class="controls">
+      <label for="districtSelect">📍 जिला चुनें (Select District / Sub-Division):</label>
+      <select id="districtSelect" onchange="updateDistrictData()">
+        <option value="nainital" selected>नैनीताल (Nainital)</option>
+        <option value="almora">अल्मोड़ा (Almora)</option>
+        <option value="dehradun">देहरादून (Dehradun)</option>
+        <option value="haridwar">हरिद्वार (Haridwar)</option>
+        <option value="pithoragarh">पिथौरागढ़ (Pithoragarh)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Realtime Weather Parameters -->
+  <div class="card">
+    <h2>🌤️ मौसम मानक (Weather Parameters - Real Time & Forecast)</h2>
+    <div class="grid">
+      <div class="metric">🌡️ तापमान (Temperature): <span id="temp" class="data-val">-- °C</span></div>
+      <div class="metric">💧 सापेक्ष आर्द्रता (Humidity): <span id="humidity" class="data-val">-- %</span></div>
+      <div class="metric">🌧️ वर्षा संभावना (Precipitation): <span id="rain" class="data-val">-- %</span></div>
+      <div class="metric">💨 हवा की गति (Wind Speed): <span id="wind" class="data-val">-- km/h</span></div>
+    </div>
+  </div>
+
+  <!-- Soil Moisture Time Series & Satellite View -->
+  <div class="card">
+    <h2>🌱 समय-अंतराल मृदा नमी (Soil Moisture Time-Interval Data)</h2>
+    <p>सतह मिट्टी की नमी (0-7 cm Depth) का 24 घंटे का समय-मानक ट्रैकिंग ग्राफ:</p>
+    <canvas id="soilChart" style="max-height: 250px;"></canvas>
   </div>
 
   <div class="card">
-    <h2>💧 Soil Moisture & Earth Observation</h2>
-    <p>Volumetric Soil Water (0-7cm depth): <span id="moisture" class="data-val">Loading...</span> m³/m³</p>
-    <small>Data Source: Satellite-derived reanalysis (ECMWF / Open Satellite Portal)</small>
+    <h2>🛰️ इसरो व उपग्रह मानचित्र (ISRO Bhuvan / Satellite Interactive View)</h2>
+    <div id="map"></div>
   </div>
 
+  <!-- Agro Advisories & Govt Data Source Links -->
   <div class="card">
-    <h2>📋 ICAR / GKMS Hill Crop Advisories</h2>
-    <ul>
-      <li><strong>Maize / Paddy:</strong> Ensure adequate drainage in hill slopes during heavy spells.</li>
-      <li><strong>Apple / Stone Fruits:</strong> Monitor for scab and fungal outbreaks during high moisture conditions.</li>
-      <li><strong>Vegetable Crops:</strong> Use mulch to regulate topsoil moisture stability.</li>
-    </ul>
+    <h2>📋 ICAR-GKMS जिलावार लाइव कृषि सलाह (Live Agro-Advisory)</h2>
+    <div id="advisoryBox">Loading advisory...</div>
+    <hr style="margin-top: 20px; border: 0; border-top: 1px solid #eee;">
+    <h3>🏛️ आधिकारिक सरकारी डेटाबेस (Official Govt Data Portals)</h3>
+    <p>अधिक विस्तृत उपग्रह नक्शों और आधिकारिक सरकारी आंकड़ों के लिए नीचे दिए गए पोर्टल देखें:</p>
+    <div class="portal-links">
+      <a class="portal-btn" href="https://mausam.imd.gov.in/" target="_blank">🌐 IMD Agromet Mausam</a>
+      <a class="portal-btn" href="https://bhuvan.nrsc.gov.in/" target="_blank">🛰️ ISRO Bhuvan Portal</a>
+      <a class="portal-btn" href="https://vedas.sac.gov.in/" target="_blank">🌱 ISRO VEDAS Agriculture</a>
+      <a class="portal-btn" href="https://icar.org.in/" target="_blank">🚜 ICAR Agrimet Portal</a>
+    </div>
   </div>
 
-  <script>
-    const lat = 29.3809;
-    const lon = 79.4437;
+</div>
 
-    // Fetch Weather & Soil Moisture Data via REST API
-    async function fetchAgriData() {
-      try {
-        const response = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,soil_moisture_0_to_7cm&hourly=precipitation_probability&timezone=Asia%2FKolkata`
-        );
-        const data = await response.json();
-
-        document.getElementById('temp').innerText = data.current.temperature_2m;
-        document.getElementById('humidity').innerText = data.current.relative_humidity_2m;
-        document.getElementById('rain').innerText = data.hourly.precipitation_probability[0];
-        document.getElementById('moisture').innerText = data.current.soil_moisture_0_to_7cm;
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // District Database: Coordinates & GKMS Advisories
+  const districtData = {
+    nainital: {
+      name: "Nainital", lat: 29.3809, lon: 79.4437,
+      advisory: "<li><strong>मक्का व धान:</strong> ढलान वाले खेतों में जल निकासी की व्यवस्था करें।</li><li><strong>फलदार वृक्ष:</strong> सेब व आड़ू में फफूंदी (Scab) से बचाव हेतु नमी जांचें।</li>"
+    },
+    almora: {
+      name: "Almora", lat: 29.5971, lon: 79.6591,
+      advisory: "<li><strong>मडुआ (Ragi):</strong> खरपतवार नियंत्रण एवं निराई-गुड़ाई का कार्य पूर्ण करें।</li><li><strong>सब्जियां:</strong> टमाटर व शिमला मिर्च में मल्चिंग का प्रयोग करें।</li>"
+    },
+    dehradun: {
+      name: "Dehradun", lat: 30.3165, lon: 78.0322,
+      advisory: "<li><strong>बासमती धान:</strong> जलभराव और तना छेदक कीट की नियमित निगरानी करें।</li><li><strong>गन्ना:</strong> जल जमाव रोकें और उचित जल निकासी नालियां बनाएं।</li>"
+    },
+    haridwar: {
+      name: "Haridwar", lat: 29.9457, lon: 78.1642,
+      advisory: "<li><strong>चावल (Paddy):</strong> यूरिया की दूसरी खुराक बारिश रुकने के बाद दें।</li><li><strong>चारा फसलें:</strong> ज्वार-बाजरा में कीट आक्रमण पर ध्यान दें।</li>"
+    },
+    pithoragarh: {
+      name: "Pithoragarh", lat: 29.5829, lon: 80.2182,
+      advisory: "<li><strong>राजमा व दालें:</strong> जड़ों में अतिरिक्त पानी रुकने न दें।</li><li><strong>पशुपालन:</strong> बारिश के मौसम में मवेशियों को सूखे स्थान पर बांधें।</li>"
     }
+  };
 
-    fetchAgriData();
-  </script>
+  let map, marker, chart;
+
+  // Initialize Map
+  function initMap(lat, lon, name) {
+    if (!map) {
+      map = L.map('map').setView([lat, lon], 10);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Satellite Tiles &copy; Esri & Open Data'
+      }).addTo(map);
+      marker = L.marker([lat, lon]).addTo(map).bindPopup(`<b>${name} District</b>`).openPopup();
+    } else {
+      map.setView([lat, lon], 10);
+      marker.setLatLng([lat, lon]).setPopupContent(`<b>${name} District</b>`).openPopup();
+    }
+  }
+
+  // Fetch Weather and Hourly Soil Moisture
+  async function loadData(distKey) {
+    const dist = districtData[distKey];
+    document.getElementById('advisoryBox').innerHTML = `<ul>${dist.advisory}</ul>`;
+    initMap(dist.lat, dist.lon, dist.name);
+
+    try {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${dist.lat}&longitude=${dist.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,soil_moisture_0_to_7cm&hourly=precipitation_probability,soil_moisture_0_to_7cm&timezone=Asia%2FKolkata`);
+      const data = await res.json();
+
+      // Current Weather updates
+      document.getElementById('temp').innerText = data.current.temperature_2m + ' °C';
+      document.getElementById('humidity').innerText = data.current.relative_humidity_2m + ' %';
+      document.getElementById('wind').innerText = data.current.wind_speed_10m + ' km/h';
+      document.getElementById('rain').innerText = data.hourly.precipitation_probability[0] + ' %';
+
+      // 24-Hour Soil Moisture Time Interval Graph Setup
+      const hours = data.hourly.time.slice(0, 24).map(t => t.split('T')[1]);
+      const moistureData = data.hourly.soil_moisture_0_to_7cm.slice(0, 24);
+
+      renderSoilChart(hours, moistureData);
+
+    } catch (err) {
+      console.error("API Fetch Error:", err);
+    }
+  }
+
+  // Render Time-Interval Chart
+  function renderSoilChart(labels, dataValues) {
+    const ctx = document.getElementById('soilChart').getContext('2d');
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Soil Moisture 0-7cm (m³/m³)',
+          data: dataValues,
+          borderColor: '#2d6a4f',
+          backgroundColor: 'rgba(45, 106, 79, 0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { title: { display: true, text: 'Time (Hours)' } },
+          y: { title: { display: true, text: 'Moisture Vol (m³/m³)' } }
+        }
+      }
+    });
+  }
+
+  function updateDistrictData() {
+    const selected = document.getElementById('districtSelect').value;
+    loadData(selected);
+  }
+
+  // Initial load
+  loadData('nainital');
+</script>
 </body>
 </html>
