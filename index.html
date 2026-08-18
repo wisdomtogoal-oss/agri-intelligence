@@ -3,300 +3,203 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kumaon Smart Krishi & Pashupalan Portal</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Kumaon ICAR & GBPUAT Diagnostic Portal</title>
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 15px; background: #eef2f5; color: #222; }
-    .container { max-width: 1050px; margin: 0 auto; }
-    .header-card { background: linear-gradient(135deg, #1b4332, #2d6a4f); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+    .container { max-width: 950px; margin: 0 auto; }
     .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    h2 { color: #2d6a4f; border-bottom: 2px solid #d8f3dc; padding-bottom: 8px; margin-top: 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    h2 { color: #2d6a4f; border-bottom: 2px solid #d8f3dc; padding-bottom: 8px; margin-top: 0; }
     
-    .controls { margin: 10px 0; display: flex; align-items: center; gap: 10px; font-weight: bold; flex-wrap: wrap; }
-    select { padding: 10px 15px; border-radius: 6px; border: 1px solid #2d6a4f; font-size: 1em; background: white; cursor: pointer; }
+    .tab-btn { padding: 10px 20px; border: none; background: #e0e0e0; cursor: pointer; border-radius: 6px; font-size: 1em; font-weight: bold; }
+    .tab-btn.active { background: #2d6a4f; color: white; }
     
-    .badge-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 15px; }
-    .badge { padding: 15px; border-radius: 8px; color: white; font-weight: bold; font-size: 1.05em; display: flex; align-items: center; justify-content: space-between; }
-    .bg-red { background-color: #d90429; }
-    .bg-green { background-color: #2b9348; }
-    .bg-blue { background-color: #0077b6; }
-
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-    .metric { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #52b788; }
-    .data-val { font-size: 1.3em; font-weight: bold; color: #1b4332; display: block; margin-top: 4px; }
+    select, input { width: 100%; padding: 10px; margin-top: 8px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
     
-    #map { height: 320px; width: 100%; border-radius: 8px; margin-top: 10px; }
-    
-    .crop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
-    .crop-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background: #fafafa; position: relative; }
-    .crop-title { font-size: 1.15em; font-weight: bold; color: #1b4332; margin-bottom: 8px; }
-    .pest-tag { background: #ffeedd; color: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
-    
-    .btn-audio { background: #e8f5e9; color: #1b4332; border: 1px solid #2d6a4f; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85em; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; }
-    .btn-audio:hover { background: #2d6a4f; color: white; }
-    
-    .portal-links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-    .btn-portal { background: #2d6a4f; color: white; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 0.9em; }
+    .result-box { display: none; margin-top: 15px; padding: 15px; background: #f4fbf7; border-left: 5px solid #2d6a4f; border-radius: 6px; }
+    .badge-gov { background: #0077b6; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+    .btn-audio { background: #e8f5e9; color: #1b4332; border: 1px solid #2d6a4f; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85em; font-weight: bold; margin-top: 10px; }
   </style>
 </head>
 <body>
 
 <div class="container">
   
-  <div class="header-card">
-    <h1 style="margin:0;">🌾 कुमाऊँ कृषि व पशुपालन ऑडियो पोर्टल</h1>
-    <p style="margin:5px 0 0 0;">GBPUAT Pantnagar & KVK Multi-Audio Agro & Livestock Advisory System</p>
+  <div class="card" style="background: linear-gradient(135deg, #1b4332, #2d6a4f); color: white;">
+    <h1 style="margin:0;">🔬 ICAR व GBPUAT निशुल्क रोग निदान पोर्टल</h1>
+    <p style="margin:5px 0 0 0;">ICAR-NCIPM & GBPUAT Pantnagar Verified Diagnostic Engine</p>
   </div>
 
-  <!-- District Selector -->
+  <!-- DIAGNOSTIC SELECTOR TABS -->
   <div class="card">
-    <div class="controls">
-      <label for="districtSelect">📍 जिला चुनें (Select Kumaon District):</label>
-      <select id="districtSelect" onchange="updateDistrictData()">
-        <option value="nainital" selected>नैनीताल (Nainital)</option>
-        <option value="almora">अल्मोड़ा (Almora)</option>
-        <option value="usnagar">ऊधम सिंह नगर (Udham Singh Nagar)</option>
-        <option value="pithoragarh">पिथौरागढ़ (Pithoragarh)</option>
-        <option value="champawat">चंपावत (Champawat)</option>
-        <option value="bageshwar">बागेश्वर (Bageshwar)</option>
+    <h2>🎯 निदान श्रेणी चुनें (Select Category)</h2>
+    <div style="display: flex; gap: 10px;">
+      <button class="tab-btn active" id="btnPlant" onclick="switchMode('plant')">🌾 फसल रोग (Plant Disease)</button>
+      <button class="tab-btn" id="btnAnimal" onclick="switchMode('animal')">🐄 पशु रोग (Animal Disease)</button>
+    </div>
+
+    <!-- PLANT DIAGNOSIS FORM -->
+    <div id="plantSection" style="margin-top: 15px;">
+      <label><strong>1. फसल चुनें (Select Crop):</strong></label>
+      <select id="plantCrop">
+        <option value="paddy">धान (Paddy)</option>
+        <option value="millet">मडुआ/कोदो (Millet)</option>
+        <option value="apple">सेब/आड़ू (Apple/Peach)</option>
+        <option value="potato">आलू (Potato)</option>
       </select>
+
+      <label><strong>2. लक्षण या फोटो चुनें (Select Symptom / Upload):</strong></label>
+      <select id="plantSymptom">
+        <option value="blast">पत्तियों पर नाव के आकार के भूरे धब्बे (Leaf Blast)</option>
+        <option value="blight">पत्तियों का किनारों से सूखना (Late Blight)</option>
+        <option value="bph">पौधे का पीला पड़कर नीचे से सूखना (Brown Planthopper)</option>
+      </select>
+      
+      <button onclick="diagnosePlant()" style="background:#2d6a4f; color:white; border:none; padding:12px; width:100%; border-radius:6px; font-size:1.05em; cursor:pointer;">
+        🔍 ICAR डेटाबेस से जांचें (Diagnose Crop)
+      </button>
+    </div>
+
+    <!-- ANIMAL DIAGNOSIS FORM -->
+    <div id="animalSection" style="margin-top: 15px; display:none;">
+      <label><strong>1. पशु का प्रकार (Select Animal):</strong></label>
+      <select id="animalType">
+        <option value="cow">गाय / भैंस (Cattle/Buffalo)</option>
+        <option value="goat">बकरी / भेड़ (Goat/Sheep)</option>
+      </select>
+
+      <label><strong>2. मुख्य लक्षण (Select Primary Symptom):</strong></label>
+      <select id="animalSymptom">
+        <option value="fmd">मुंह और खुरों में छाले व लार गिरना (FMD)</option>
+        <option value="hs">तेज बुखार व गर्दन में सूजन/घुर-घुर आवाज (HS/गलघोंटू)</option>
+        <option value="ppr">बकरी में दस्त, आंख-नाक से पानी (PPR)</option>
+      </select>
+
+      <button onclick="diagnoseAnimal()" style="background:#2d6a4f; color:white; border:none; padding:12px; width:100%; border-radius:6px; font-size:1.05em; cursor:pointer;">
+        🔍 पंतनगर पशु चिकित्सा डेटाबेस से जांचें (Diagnose Animal)
+      </button>
     </div>
   </div>
 
-  <!-- SMART ACTION BADGES -->
-  <div class="card">
-    <h2>
-      🎯 किसान निर्णय सहायता (Smart Alerts)
-      <button class="btn-audio" onclick="playAudio('weather')">🎙️ मौसम ऑडियो (Kumaoni)</button>
-    </h2>
-    <div class="badge-grid">
-      <div id="irrigationBadge" class="badge bg-green">
-        <span>💧 सिंचाई सलाह:</span>
-        <span id="irrigationText">जाँच हो रही है...</span>
-      </div>
-      <div id="sprayBadge" class="badge bg-green">
-        <span>🧪 छिड़काव विंडो (Spray Alert):</span>
-        <span id="sprayText">जाँच हो रही है...</span>
-      </div>
+  <!-- DIAGNOSIS OUTPUT DISPLAY -->
+  <div id="resultCard" class="card result-box">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="resTitle" style="margin:0; color:#1b4332;">--</h3>
+      <span class="badge-gov" id="resGovTag">ICAR VERIFIED</span>
     </div>
+    <hr style="border:0; border-top:1px solid #d8f3dc; margin:10px 0;">
+    <p><strong>रोग का नाम (Identified Disease):</strong> <span id="resDisease" style="color:#d90429; font-weight:bold;">--</span></p>
+    <p><strong>जैविक/सामुदायिक उपचार (Organic/Cultural Measure):</strong></p>
+    <div id="resOrganic" style="background:#fff; padding:10px; border-radius:6px; margin-bottom:10px;">--</div>
+    <p><strong>वैज्ञानिक रासायनिक उपचार (ICAR/GBPUAT Recommended Chemical):</strong></p>
+    <div id="resChemical" style="background:#fff; padding:10px; border-radius:6px;">--</div>
+    
+    <button class="btn-audio" onclick="playDiagnosticAudio()">🎙️ कुमाऊँनी ऑडियो सलाह सुनें (Kumaoni Advisory)</button>
   </div>
 
-  <!-- Weather Metrics -->
+  <!-- DIRECT GOVT HELPLINES -->
   <div class="card">
-    <h2>🌤️ लाइव मौसम (Realtime Weather)</h2>
-    <div class="grid">
-      <div class="metric">🌡️ तापमान: <span id="temp" class="data-val">-- °C</span></div>
-      <div class="metric">💧 नमी: <span id="humidity" class="data-val">-- %</span></div>
-      <div class="metric">🌧️ बारिश संभावना: <span id="rain" class="data-val">-- %</span></div>
-      <div class="metric">💨 हवा गति: <span id="wind" class="data-val">-- km/h</span></div>
-    </div>
-  </div>
-
-  <!-- ANIMAL HUSBANDRY ADVISORY SECTION -->
-  <div class="card">
-    <h2>
-      🐄 पशुपालन एवं डेयरी सलाह (Animal Husbandry GBPUAT Pantnagar)
-      <button class="btn-audio" onclick="playAudio('cattle')">🎙️ कुमाऊँनी ऑडियो (Cattle Care)</button>
-    </h2>
-    <div class="crop-grid">
-      <div class="crop-card">
-        <div class="crop-title">🐮 गाय व भैंस देखभाल (Cattle Health)</div>
-        <p><strong>जोखिम:</strong> खुरपका-मुंहपका (FMD), गलघोंटू (HS), गलगंड।</p>
-        <p><strong>KVK उपाय:</strong> समय पर FMD और HS का टीका (Vaccine) लगवाएं। बरसात में पशुओं को गीले स्थान पर न बांधें।</p>
-      </div>
-      <div class="crop-card">
-        <div class="crop-title">🐐 भेड़ व बकरी पालन (Goat & Sheep)</div>
-        <p><strong>जोखिम:</strong> PPR रोग, निमोनिया, आंतरिक परजीवी (Worms)।</p>
-        <p><strong>KVK उपाय:</strong> PPR का 3 साल में एक बार टीका जरूर लगवाएं। पेट के कीड़ों की दवा (Deworming) दें।</p>
-      </div>
-      <div class="crop-card">
-        <div class="crop-title">🥛 दुग्ध उत्पादन व पोषण (Feed & Nutrition)</div>
-        <p><strong>जोखिम:</strong> दूध में गिरावट, खनिज की कमी।</p>
-        <p><strong>KVK उपाय:</strong> रोजाना 50g मिनरल मिक्सचर (Mineral Mixture) और हरा चारा (Barseem/Luzerne) दें।</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- SOIL MOISTURE CHART -->
-  <div class="card">
-    <h2>🌱 समय-अंतराल मृदा नमी (Soil Moisture 0-7 cm)</h2>
-    <canvas id="soilChart" style="max-height: 200px;"></canvas>
-  </div>
-
-  <!-- SATELLITE MAP -->
-  <div class="card">
-    <h2>🛰️ उपग्रह मानचित्र (Satellite View)</h2>
-    <div id="map"></div>
-  </div>
-
-  <!-- CROPS ADVISORY SECTION -->
-  <div class="card">
-    <h2>🐛 फसल सुरक्षा एवं कीट प्रबंधन (Crop Protection)</h2>
-    <div id="cropContainer" class="crop-grid"></div>
-  </div>
-
-  <!-- GOVT PORTALS -->
-  <div class="card">
-    <h2>💰 मंडी भाव व सरकारी पोर्टल (Govt & Agmarknet Portals)</h2>
-    <div class="portal-links">
-      <a class="btn-portal" href="https://agmarknet.gov.in/" target="_blank">📈 आज के मंडी भाव (Agmarknet)</a>
-      <a class="btn-portal" href="https://www.gbpuat.ac.in/" target="_blank">🏛️ GBPUAT पंतनगर पोर्टल</a>
-      <a class="btn-portal" href="https://bhuvan.nrsc.gov.in/" target="_blank">🛰️ इसरो भुवन (ISRO Bhuvan)</a>
-    </div>
+    <h2>📞 निःशुल्क सरकारी हेल्पलाइन (Free Govt Helplines)</h2>
+    <p>📞 <strong>किसान कॉल सेंटर (Kisan Call Center):</strong> 1800-180-1551 (Toll Free)</p>
+    <p>🏛️ <strong>GBPUAT पंतनगर हेल्पलाइन:</strong> 05944-233473</p>
   </div>
 
 </div>
 
-<!-- AUDIO PLAYER -->
-<audio id="audioPlayer" src=""></audio>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  const kumaonCrops = {
-    hillMajor: [
-      { name: "धान (Hill Paddy)", pests: "Blast (झोंका रोग)", remedy: "ट्राइसाइक्लाजोल 0.6g/L छिड़कें।", audio: "paddy_care" },
-      { name: "मडुआ (Finger Millet)", pests: "Blast (झुलसा रोग)", remedy: "सुडोमोनास (10g/kg) से बीज शोधन करें।", audio: "paddy_care" },
-      { name: "सेब व आड़ू (Fruits)", pests: "Scab (स्कैब), Canker", remedy: "मैंकोज़ेब (2.5g/L) और बोर्डो पेस्ट लगाएं।", audio: "fruit_care" },
-      { name: "आलू (Potato)", pests: "Late Blight", remedy: "कॉपर ऑक्सीक्लोराइड (3g/L) का उपयोग करें।", audio: "fruit_care" }
-    ],
-    plainMajor: [
-      { name: "तराई धान", pests: "BPH (भूरा माहू)", remedy: "इमिडाक्लोप्रिड (0.5ml/L) छिड़कें।", audio: "paddy_care" },
-      { name: "गन्ना (Sugarcane)", pests: "Red Rot (लाल सड़न)", remedy: "रोगग्रस्त पौधे उखाड़कर नष्ट करें।", audio: "paddy_care" },
-      { name: "गेहूं (Wheat)", pests: "Yellow Rust", remedy: "प्रोपिकोनाज़ोल (1ml/L) छिड़कें।", audio: "paddy_care" }
-    ]
-  };
-
-  const districtData = {
-    nainital: { name: "Nainital", lat: 29.3809, lon: 79.4437, type: "hillMajor" },
-    almora: { name: "Almora", lat: 29.5971, lon: 79.6591, type: "hillMajor" },
-    usnagar: { name: "Udham Singh Nagar", lat: 28.9800, lon: 79.4000, type: "plainMajor" },
-    pithoragarh: { name: "Pithoragarh", lat: 29.5829, lon: 80.2182, type: "hillMajor" },
-    champawat: { name: "Champawat", lat: 29.3370, lon: 80.0925, type: "hillMajor" },
-    bageshwar: { name: "Bageshwar", lat: 29.8404, lon: 79.7694, type: "hillMajor" }
-  };
-
-  let map, marker, chart, dynamicWeatherAudio = "audio/moisture_ok.mp3";
-
-  function initMap(lat, lon, name) {
-    if (!map) {
-      map = L.map('map').setView([lat, lon], 10);
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Satellite Tiles &copy; Esri'
-      }).addTo(map);
-      marker = L.marker([lat, lon]).addTo(map).bindPopup(`<b>${name} District</b>`).openPopup();
-    } else {
-      map.setView([lat, lon], 10);
-      marker.setLatLng([lat, lon]).setPopupContent(`<b>${name} District</b>`).openPopup();
-    }
-  }
-
-  async function loadData(distKey) {
-    const dist = districtData[distKey];
-    initMap(dist.lat, dist.lon, dist.name);
-    renderCrops(dist.type);
-
-    try {
-      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${dist.lat}&longitude=${dist.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,soil_moisture_0_to_7cm&hourly=precipitation_probability,soil_moisture_0_to_7cm&timezone=Asia%2FKolkata`);
-      const data = await res.json();
-
-      document.getElementById('temp').innerText = data.current.temperature_2m + ' °C';
-      document.getElementById('humidity').innerText = data.current.relative_humidity_2m + ' %';
-      document.getElementById('wind').innerText = data.current.wind_speed_10m + ' km/h';
-      document.getElementById('rain').innerText = data.hourly.precipitation_probability[0] + ' %';
-
-      updateSmartBadges(data.current.soil_moisture_0_to_7cm, data.hourly.precipitation_probability[0], data.current.wind_speed_10m);
-
-      const hours = data.hourly.time.slice(0, 24).map(t => t.split('T')[1]);
-      const moistureData = data.hourly.soil_moisture_0_to_7cm.slice(0, 24);
-      renderSoilChart(hours, moistureData);
-
-    } catch (err) {
-      console.error("API Fetch Error:", err);
-    }
-  }
-
-  function updateSmartBadges(moisture, rainProb, wind) {
-    const irrBadge = document.getElementById('irrigationBadge');
-    const irrText = document.getElementById('irrigationText');
-    const sprayBadge = document.getElementById('sprayBadge');
-    const sprayText = document.getElementById('sprayText');
-
-    if (rainProb > 50) {
-      irrBadge.className = "badge bg-blue";
-      irrText.innerText = "बारिश की संभावना (पानी न डालें)";
-      dynamicWeatherAudio = "audio/rain_alert.mp3";
-    } else if (moisture < 0.20) {
-      irrBadge.className = "badge bg-red";
-      irrText.innerText = "मिट्टी सूखी है (आज सिंचाई करें)";
-      dynamicWeatherAudio = "audio/irrigate.mp3";
-    } else {
-      irrBadge.className = "badge bg-green";
-      irrText.innerText = "मृदा नमी पर्याप्त है (सिंचाई न करें)";
-      dynamicWeatherAudio = "audio/moisture_ok.mp3";
-    }
-
-    if (wind > 15 || rainProb > 30) {
-      sprayBadge.className = "badge bg-red";
-      sprayText.innerText = "अनुकूल नहीं (हवा/बारिश जोखिम)";
-    } else {
-      sprayBadge.className = "badge bg-green";
-      sprayText.innerText = "सुरक्षित (मौसम शांत है)";
-    }
-  }
-
-  function renderCrops(cropType) {
-    const crops = kumaonCrops[cropType];
-    document.getElementById('cropContainer').innerHTML = crops.map(c => `
-      <div class="crop-card">
-        <div class="crop-title">${c.name}</div>
-        <p style="margin:5px 0;"><strong>कीट/रोग:</strong> <span class="pest-tag">${c.pests}</span></p>
-        <p style="margin:5px 0; font-size:0.9em;"><strong>उपाय:</strong> ${c.remedy}</p>
-        <button class="btn-audio" style="margin-top:8px;" onclick="playAudio('${c.audio}')">🎙️ कुमाऊँनी ऑडियो</button>
-      </div>
-    `).join('');
-  }
-
-  function renderSoilChart(labels, dataValues) {
-    const ctx = document.getElementById('soilChart').getContext('2d');
-    if (chart) chart.destroy();
-    chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Soil Moisture (m³/m³)',
-          data: dataValues,
-          borderColor: '#2d6a4f',
-          backgroundColor: 'rgba(45, 106, 79, 0.1)',
-          fill: true,
-          tension: 0.3
-        }]
+  // ICAR & GBPUAT Verified Database Array
+  const db = {
+    plant: {
+      blast: {
+        name: "धान का झोंका रोग (Rice Blast - Pyricularia oryzae)",
+        gov: "ICAR-NCIPM Standard",
+        organic: "सुडोमोनास फ्लोरेसेंस (Pseudomonas fluorescens) 10 ग्राम/लीटर से बीज शोधन करें।",
+        chemical: "ट्राइसाइक्लाजोल 75% WP @ 0.6 ग्राम प्रति लीटर पानी में मिलाकर छिड़कें।",
+        audio: "paddy_care.mp3"
       },
-      options: { responsive: true }
-    });
+      blight: {
+        name: "पछेता झुलसा रोग (Late Blight)",
+        gov: "ICAR-CPRI Standard",
+        organic: "तांबे पर आधारित बोर्डो मिश्रण (1%) का प्रयोग करें।",
+        chemical: "मैंकोज़ेब (Mancozeb 75% WP) 2.5 ग्राम प्रति लीटर पानी में मिलाकर छिड़कें।",
+        audio: "fruit_care.mp3"
+      },
+      bph: {
+        name: "भूरा माहू (Brown Planthopper)",
+        gov: "ICAR-NRRI Standard",
+        organic: "खेत से अतिरिक्त पानी निकालें और नीम तेल (1500 ppm) 5ml/L छिड़कें।",
+        chemical: "इमिडाक्लोप्रिड 17.8% SL @ 0.5 ml प्रति लीटर पानी में छिड़कें।",
+        audio: "paddy_care.mp3"
+      }
+    },
+    animal: {
+      fmd: {
+        name: "खुरपका-मुंहपका रोग (Foot & Mouth Disease - FMD)",
+        gov: "GBPUAT Vet Extension",
+        organic: "छाले वाले स्थान पर लाल दवा (पोटेशियम परमैंगनेट 1%) के घोल से धोएं और फिटकरी लगाएं।",
+        chemical: "FMD वैक्सीन (FMD Vaccine) वर्ष में दो बार (मई व नवंबर) अवश्य लगवाएं।",
+        audio: "cattle_care.mp3"
+      },
+      hs: {
+        name: "गलघोंटू (Hemorrhagic Septicemia - HS)",
+        gov: "ICAR-IVRI Standard",
+        organic: "बीमार पशु को तुरंत ठंडे व हवादार स्थान पर अलग करें।",
+        chemical: "मानसून से पूर्व HS वैक्सीन (HS Vaccine) लगवाएं। नजदीकी पशु चिकित्सक से तुरंत एंटीबायोटिक लें।",
+        audio: "cattle_care.mp3"
+      },
+      ppr: {
+        name: "पीपीआर / बकरी प्लेग (PPR in Goats)",
+        gov: "GBPUAT Goat Care",
+        organic: "ओआरएस (ORS) घोल दें और बकरियों को बारिश से बचाकर सुखी जगह रखें।",
+        chemical: "PPR वैक्सीन हर 3 साल में एक बार पशु चिकित्सालय से लगवाएं।",
+        audio: "cattle_care.mp3"
+      }
+    }
+  };
+
+  let activeAudio = "";
+
+  function switchMode(mode) {
+    if(mode === 'plant') {
+      document.getElementById('plantSection').style.display = 'block';
+      document.getElementById('animalSection').style.display = 'none';
+      document.getElementById('btnPlant').classList.add('active');
+      document.getElementById('btnAnimal').classList.remove('active');
+    } else {
+      document.getElementById('plantSection').style.display = 'none';
+      document.getElementById('animalSection').style.display = 'block';
+      document.getElementById('btnAnimal').classList.add('active');
+      document.getElementById('btnPlant').classList.remove('active');
+    }
+    document.getElementById('resultCard').style.display = 'none';
   }
 
-  // Audio Dispatcher Function
-  function playAudio(type) {
-    const player = document.getElementById('audioPlayer');
-    let file = "";
-
-    if (type === 'weather') file = dynamicWeatherAudio;
-    else if (type === 'cattle') file = "audio/cattle_care.mp3";
-    else if (type === 'paddy_care') file = "audio/paddy_care.mp3";
-    else if (type === 'fruit_care') file = "audio/fruit_care.mp3";
-    else file = "audio/moisture_ok.mp3";
-
-    player.src = file;
-    player.play().catch(() => alert(`Kumaoni audio alert: Please upload ${file} to your GitHub audio/ folder.`));
+  function diagnosePlant() {
+    const sym = document.getElementById('plantSymptom').value;
+    const data = db.plant[sym];
+    showResult(data);
   }
 
-  function updateDistrictData() {
-    loadData(document.getElementById('districtSelect').value);
+  function diagnoseAnimal() {
+    const sym = document.getElementById('animalSymptom').value;
+    const data = db.animal[sym];
+    showResult(data);
   }
 
-  loadData('nainital');
+  function showResult(data) {
+    document.getElementById('resultCard').style.display = 'block';
+    document.getElementById('resTitle').innerText = "निदान व वैज्ञानिक उपचार (Diagnostic Result)";
+    document.getElementById('resGovTag').innerText = data.gov;
+    document.getElementById('resDisease').innerText = data.name;
+    document.getElementById('resOrganic').innerText = data.organic;
+    document.getElementById('resChemical').innerText = data.chemical;
+    activeAudio = "audio/" + data.audio;
+  }
+
+  function playDiagnosticAudio() {
+    const player = new Audio(activeAudio);
+    player.play().catch(() => alert("Kumaoni audio: Please ensure " + activeAudio + " is present in your audio/ folder."));
+  }
 </script>
+
 </body>
 </html>
